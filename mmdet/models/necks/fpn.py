@@ -14,7 +14,7 @@ class FPN(nn.Module):
                  in_channels, #不同的stage最后的输出通道数 [256, 512, 1024, 2048]
                  out_channels, #经过fpn之后的特征层通道数， 256d
                  num_outs,  #特征融合层的数目 也是最终输出的level数目 =5 4个stage输出5个level？
-                 start_level=0,
+                 start_level=2,
                  end_level=-1,
                  add_extra_convs=False,
                  extra_convs_on_inputs=True,

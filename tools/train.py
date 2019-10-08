@@ -11,24 +11,32 @@ from mmdet.apis import (get_root_logger, init_dist, set_random_seed,
 from mmdet.datasets import build_dataset
 from mmdet.models import build_detector
 
+# train负责训练指定模型
 
+# parse_args()用来设置train的配置
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
     parser.add_argument('config', help='train config file path')
+    # --work_dir指定checkpoint文件的输出目录
     parser.add_argument('--work_dir', help='the dir to save logs and models')
+    # --resume_from指定在某个checkpoint的基础上继续训练
     parser.add_argument(
         '--resume_from', help='the checkpoint file to resume from')
+    # 是指是否在训练中建立checkpoint的时候对该checkpoint进行评估
     parser.add_argument(
         '--validate',
         action='store_true',
         help='whether to evaluate the checkpoint during training')
+    # 选择使用的gpu的数目
     parser.add_argument(
         '--gpus',
         type=int,
         default=1,
         help='number of gpus to use '
         '(only applicable to non-distributed training)')
+    # 设置随机数种子
     parser.add_argument('--seed', type=int, default=None, help='random seed')
+    # 选择是否分布式训练
     parser.add_argument(
         '--launcher',
         choices=['none', 'pytorch', 'slurm', 'mpi'],
@@ -48,7 +56,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-
+    # 读取config文件,configs/*.py 建立mmcv.Config对象
     cfg = Config.fromfile(args.config)
     # set cudnn_benchmark
     if cfg.get('cudnn_benchmark', False):
@@ -79,7 +87,7 @@ def main():
     if args.seed is not None:
         logger.info('Set random seed to {}'.format(args.seed))
         set_random_seed(args.seed)
-
+    # 输入配置信息 建立模型
     model = build_detector(
         cfg.model, train_cfg=cfg.train_cfg, test_cfg=cfg.test_cfg)
 

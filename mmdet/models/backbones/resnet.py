@@ -12,7 +12,7 @@ from ..registry import BACKBONES
 from ..utils import build_conv_layer, build_norm_layer
 
 
-class BasicBlock(nn.Module):
+class BasicBlock(nn.Module): #resnet50由4个stage组成，每个stage由若干block组成
     expansion = 1
 
     def __init__(self,
@@ -33,21 +33,21 @@ class BasicBlock(nn.Module):
         assert gen_attention is None, "Not implemented yet."
         assert gcb is None, "Not implemented yet."
 
-        self.norm1_name, norm1 = build_norm_layer(norm_cfg, planes, postfix=1)
-        self.norm2_name, norm2 = build_norm_layer(norm_cfg, planes, postfix=2)
+        self.norm1_name, norm1 = build_norm_layer(norm_cfg, planes, postfix=1) #planes是输入通道的数目
+        self.norm2_name, norm2 = build_norm_layer(norm_cfg, planes, postfix=2)#postfix是创建网络名称用的
 
         self.conv1 = build_conv_layer(
             conv_cfg,
-            inplanes,
-            planes,
+            inplanes, #输入通道
+            planes,   #输出通道 这个是层间卷积
             3,
             stride=stride,
             padding=dilation,
             dilation=dilation,
             bias=False)
-        self.add_module(self.norm1_name, norm1)
+        self.add_module(self.norm1_name, norm1) #nn里面添加层的方法 net1.add_module('batchnorm', nn.BatchNorm2d(3))
         self.conv2 = build_conv_layer(
-            conv_cfg, planes, planes, 3, padding=1, bias=False)
+            conv_cfg, planes, planes, 3, padding=1, bias=False) #block内部的卷积
         self.add_module(self.norm2_name, norm2)
 
         self.relu = nn.ReLU(inplace=True)
@@ -58,7 +58,7 @@ class BasicBlock(nn.Module):
 
     @property
     def norm1(self):
-        return getattr(self, self.norm1_name)
+        return getattr(self, self.norm1_name) #返回一个对象的属性值
 
     @property
     def norm2(self):
@@ -449,7 +449,7 @@ class ResNet(nn.Module):
     def norm1(self):
         return getattr(self, self.norm1_name)
 
-    def _make_stem_layer(self):
+    def _make_stem_layer(self): #这个是最前面的层
         self.conv1 = build_conv_layer(
             self.conv_cfg,
             3,

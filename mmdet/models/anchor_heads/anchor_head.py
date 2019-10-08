@@ -29,17 +29,17 @@ class AnchorHead(nn.Module):
     """  # noqa: W605
 
     def __init__(self,
-                 num_classes,
-                 in_channels,
-                 feat_channels=256,
-                 anchor_scales=[8, 16, 32],
-                 anchor_ratios=[0.5, 1.0, 2.0],
-                 anchor_strides=[4, 8, 16, 32, 64],
-                 anchor_base_sizes=None,
-                 target_means=(.0, .0, .0, .0),
+                 num_classes,  #分类的数目（RPN处前景背景，最终阶段分类81，类别+1，）
+                 in_channels,  #输入的特征图通道数
+                 feat_channels=256,   #特征图的通道数 这个是rpn的中间那个卷积层的通道数
+                 anchor_scales=[8, 16, 32],  #anchor的scale 一个中心点的9个anchors
+                 anchor_ratios=[0.5, 1.0, 2.0],  #ratio
+                 anchor_strides=[4, 8, 16, 32, 64],  #anchor的步长
+                 anchor_base_sizes=None,   #anchor的基础大小
+                 target_means=(.0, .0, .0, .0),  #均值方差
                  target_stds=(1.0, 1.0, 1.0, 1.0),
                  loss_cls=dict(
-                     type='CrossEntropyLoss',
+                     type='CrossEntropyLoss',  #sigmoid2分类
                      use_sigmoid=True,
                      loss_weight=1.0),
                  loss_bbox=dict(
@@ -52,23 +52,23 @@ class AnchorHead(nn.Module):
         self.anchor_ratios = anchor_ratios
         self.anchor_strides = anchor_strides
         self.anchor_base_sizes = list(
-            anchor_strides) if anchor_base_sizes is None else anchor_base_sizes
+            anchor_strides) if anchor_base_sizes is None else anchor_base_sizes #根据步长决定anchor大小
         self.target_means = target_means
         self.target_stds = target_stds
 
-        self.use_sigmoid_cls = loss_cls.get('use_sigmoid', False)
-        self.sampling = loss_cls['type'] not in ['FocalLoss', 'GHMC']
-        if self.use_sigmoid_cls:
-            self.cls_out_channels = num_classes - 1
+        self.use_sigmoid_cls = loss_cls.get('use_sigmoid', False) #如果没有设置use_sigmoid,则返回false
+        self.sampling = loss_cls['type'] not in ['FocalLoss', 'GHMC'] #bool值判断cls的loss是否是focalloss和GHMC
+        if self.use_sigmoid_cls: #sigmoid分类=True
+            self.cls_out_channels = num_classes - 1 #-1去掉的就是背景分类
         else:
-            self.cls_out_channels = num_classes
-        self.loss_cls = build_loss(loss_cls)
+            self.cls_out_channels = num_classes #这个是softmax分类
+        self.loss_cls = build_loss(loss_cls)  #指定reg cls的类型build配置
         self.loss_bbox = build_loss(loss_bbox)
-        self.fp16_enabled = False
+        self.fp16_enabled = False #不使用半精度浮点数计算
 
         self.anchor_generators = []
-        for anchor_base in self.anchor_base_sizes:
-            self.anchor_generators.append(
+        for anchor_base in self.anchor_base_sizes: #anchor_base_sizes根据anchor_strides生成，list类型
+            self.anchor_generators.append( #调用mmdet.core.anchor_generator生成anchors
                 AnchorGenerator(anchor_base, anchor_scales, anchor_ratios))
 
         self.num_anchors = len(self.anchor_ratios) * len(self.anchor_scales)
@@ -77,7 +77,7 @@ class AnchorHead(nn.Module):
     def _init_layers(self):
         self.conv_cls = nn.Conv2d(self.feat_channels,
                                   self.num_anchors * self.cls_out_channels, 1)
-        self.conv_reg = nn.Conv2d(self.feat_channels, self.num_anchors * 4, 1)
+        self.conv_reg = nn.Conv2d(self.feat_channels, self.num_anchors * 4, 1) #这里与rpnhead相同
 
     def init_weights(self):
         normal_init(self.conv_cls, std=0.01)
@@ -102,7 +102,7 @@ class AnchorHead(nn.Module):
             tuple: anchors of each image, valid flags of each image
         """
         num_imgs = len(img_metas)
-        num_levels = len(featmap_sizes)
+        num_levels = len(featmap_sizes) #fpn的level数
 
         # since feature map sizes of all images are the same, we only compute
         # anchors for one time

@@ -1,0 +1,2 @@
+mmdet.models
+    各种目标检测网络实现函数。基类都是nn.Module。很多是torch中已经有的功能的包装。

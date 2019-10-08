@@ -1,0 +1,2 @@
+mmdet.ops
+    实现roialign.roipool.nms的地方。具体实现方法是用c++实现

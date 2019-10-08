@@ -36,9 +36,9 @@ def bounded_iou_loss(pred, target, beta=0.2, eps=1e-3):
         pred (tensor): Predicted bboxes.
         target (tensor): Target bboxes.
         beta (float): beta parameter in smoothl1.
-        eps (float): eps to avoid NaN.
+        eps (float): eps to avoid NaN. #eps就是加个小数避免NAN
     """
-    pred_ctrx = (pred[:, 0] + pred[:, 2]) * 0.5
+    pred_ctrx = (pred[:, 0] + pred[:, 2]) * 0.5 #reg的loss是smoothl1，cls和mask的都是cross entropy
     pred_ctry = (pred[:, 1] + pred[:, 3]) * 0.5
     pred_w = pred[:, 2] - pred[:, 0] + 1
     pred_h = pred[:, 3] - pred[:, 1] + 1
@@ -49,7 +49,7 @@ def bounded_iou_loss(pred, target, beta=0.2, eps=1e-3):
         target_h = target[:, 3] - target[:, 1] + 1
 
     dx = target_ctrx - pred_ctrx
-    dy = target_ctry - pred_ctry
+    dy = target_ctry - pred_ctry #target是gt值 这里在训练的时候用到
 
     loss_dx = 1 - torch.max(
         (target_w - 2 * dx.abs()) /

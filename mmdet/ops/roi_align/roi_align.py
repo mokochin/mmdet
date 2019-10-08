@@ -6,11 +6,11 @@ from torch.nn.modules.utils import _pair
 from . import roi_align_cuda
 
 
-class RoIAlignFunction(Function):
+class RoIAlignFunction(Function): #仿照torchvision.ops中的roialign 自定义了一个函数完成前向后向的传播
 
     @staticmethod
     def forward(ctx, features, rois, out_size, spatial_scale, sample_num=0):
-        out_h, out_w = _pair(out_size)
+        out_h, out_w = _pair(out_size)   #out_size应该是一个值，_pair()应该是重复两遍,构成一个tuple roialign生成的是正方形的特征图
         assert isinstance(out_h, int) and isinstance(out_w, int)
         ctx.spatial_scale = spatial_scale
         ctx.sample_num = sample_num
@@ -56,30 +56,30 @@ class RoIAlignFunction(Function):
 roi_align = RoIAlignFunction.apply
 
 
-class RoIAlign(nn.Module):
-
-    def __init__(self,
-                 out_size,
-                 spatial_scale,
-                 sample_num=0,
+class RoIAlign(nn.Module): #实现roialign，这个是maskrcnn中的一个层把bbox在特征图中选择出来
+ #定义层的时候如果层内有variable用nn定义，没有就用nn.functinal定义
+    def __init__(self,  #首先初始化
+                 out_size, #out_size指的应该是bbox在特征图上面的大小
+                 spatial_scale, #大小？
+                 sample_num=0, #采样的数目 这个应该是初始值
                  use_torchvision=False):
         super(RoIAlign, self).__init__()
 
-        self.out_size = _pair(out_size)
+        self.out_size = _pair(out_size) #初步处理 torch.nn.modules.utils._pair()是把一个可循环的x repeat2次
         self.spatial_scale = float(spatial_scale)
         self.sample_num = int(sample_num)
         self.use_torchvision = use_torchvision
 
     def forward(self, features, rois):
         if self.use_torchvision:
-            from torchvision.ops import roi_align as tv_roi_align
+            from torchvision.ops import roi_align as tv_roi_align #torchvision里面有roialign函数
             return tv_roi_align(features, rois, self.out_size,
                                 self.spatial_scale, self.sample_num)
         else:
             return roi_align(features, rois, self.out_size, self.spatial_scale,
                              self.sample_num)
 
-    def __repr__(self):
+    def __repr__(self):  #class的自我描述 把class初始化后的这些参数可以print()看到
         format_str = self.__class__.__name__
         format_str += '(out_size={}, spatial_scale={}, sample_num={}'.format(
             self.out_size, self.spatial_scale, self.sample_num)

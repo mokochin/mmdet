@@ -1,9 +1,10 @@
 import os
+import sys
 import platform
 import subprocess
 import time
 from setuptools import Extension, dist, find_packages, setup
-
+sys.path.append('/home/casper/software/anaconda3/envs/mmdetection/lib/python3.6/site-packages')
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
 dist.Distribution().fetch_build_eggs(['Cython', 'numpy>=1.11.1'])

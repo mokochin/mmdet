@@ -1,0 +1,39 @@
+位置：
+	mmdet/model的registry只是注册关键字；mmdet/utils/registry存放的才是真正的注册实现函数。
+
+功能：
+	注册模块占位符
+	在程序运行之前先注册相应的模块占位，便于在config文件直接对相应的模块进行配置填充
+
+类型：
+    7大类：（实际后来dataset也是这么管理的）
+		BACKBONES = Registry('backbone')
+		NECKS = Registry('neck')
+		ROI_EXTRACTORS = Registry('roi_extractor')
+		SHARED_HEADS = Registry('shared_head')
+		HEADS = Registry('head')
+		LOSSES = Registry('loss')
+		DETECTORS = Registry('detector')
+	每类包含各个具体的分类，如BACKBONES中有'ResNet', 'ResNeXt', 'SSDVGG'，添加方法后述
+	
+
+*直观理解：
+  即便如此，Registry的具体形式是什么？
+  例如import的DETECTOR为例，直接打印查看DETECTOR得到：
+      Registry(name=detector, items=['SingleStageDetector', 'TwoStageDetector', 'RPN', 'FastRCNN',    
+                                     'FasterRCNN', 'MaskRCNN', 'CascadeRCNN', 'HybridTaskCascade', 'RetinaNet', 'FCOS', 'GridRCNN', 'MaskScoringRCNN'])
+  查看type是<class 'mmdet.utils.registry.Registry'>
+
+
+	    
+理解Registry的作用：
+    Registry的模块有7个，每个下的_module_dict字典会添加存放其中的不同类
+    作用是用于索引和搭建；
+       
+    
+    
+build_from_cfg(cfg, registry, default_args=None)
+    输入：模型配置，模块占位符，训练/检测配置
+    输出：网络7个大类的模块化构建完成
+    注意：上述的五个大类，即使是DETECTORS，本质都是占位符，在传入cfg的真正参数之前都是不连接的；
+         顺序是：先搭建DETECTORS，然后根据其配置需求依次搭建其下的前四种模块，整个构成DETECTORS    

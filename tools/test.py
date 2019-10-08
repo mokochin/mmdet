@@ -102,7 +102,7 @@ def collect_results(result_part, size, tmpdir=None):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='MMDet test detector')
-    parser.add_argument('config', help='test config file path')
+    parser.add_argument('config', help='test config file path') #这个很重要
     parser.add_argument('checkpoint', help='checkpoint file')
     parser.add_argument('--out', help='output result file')
     parser.add_argument(
@@ -133,7 +133,7 @@ def main():
     args = parse_args()
 
     assert args.out or args.show or args.json_out, \
-        ('Please specify at least one operation (save or show the results) '
+        ('Please specify at least one operation (save or show the results) '  #选择输出方式
          'with the argument "--out" or "--show" or "--json_out"')
 
     if args.out is not None and not args.out.endswith(('.pkl', '.pickle')):

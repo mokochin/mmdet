@@ -3,7 +3,7 @@ from .two_stage import TwoStageDetector
 
 
 @DETECTORS.register_module
-class MaskRCNN(TwoStageDetector):
+class MaskRCNN(TwoStageDetector): #maskrcnn的网络结构
 
     def __init__(self,
                  backbone,

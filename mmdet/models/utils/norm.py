@@ -1,8 +1,8 @@
 import torch.nn as nn
 
 norm_cfg = {
-    # format: layer_type: (abbreviation, module)
-    'BN': ('bn', nn.BatchNorm2d),
+    # format: layer_type: (abbreviation, module) #创建BN
+    'BN': ('bn', nn.BatchNorm2d), #layer的缩写和对应module
     'SyncBN': ('bn', nn.SyncBatchNorm),
     'GN': ('gn', nn.GroupNorm),
     # and potentially 'SN'
@@ -14,7 +14,7 @@ def build_norm_layer(cfg, num_features, postfix=''):
 
     Args:
         cfg (dict): cfg should contain:
-            type (str): identify norm layer type.
+            type (str): identify norm layer type. 'BN'
             layer args: args needed to instantiate a norm layer.
             requires_grad (bool): [optional] whether stop gradient updates
         num_features (int): number of channels from input.
@@ -26,18 +26,18 @@ def build_norm_layer(cfg, num_features, postfix=''):
         layer (nn.Module): created norm layer
     """
     assert isinstance(cfg, dict) and 'type' in cfg
-    cfg_ = cfg.copy()
+    cfg_ = cfg.copy() #cfg深拷贝
 
-    layer_type = cfg_.pop('type')
+    layer_type = cfg_.pop('type') #找到是什么样的norm layer type
     if layer_type not in norm_cfg:
         raise KeyError('Unrecognized norm type {}'.format(layer_type))
     else:
-        abbr, norm_layer = norm_cfg[layer_type]
+        abbr, norm_layer = norm_cfg[layer_type] #abbr是层的缩写，norm_layer是函数名
         if norm_layer is None:
             raise NotImplementedError
 
-    assert isinstance(postfix, (int, str))
-    name = abbr + str(postfix)
+    assert isinstance(postfix, (int, str))#int str中的一种
+    name = abbr + str(postfix) #postfix可能指第几个'bn'
 
     requires_grad = cfg_.pop('requires_grad', True)
     cfg_.setdefault('eps', 1e-5)

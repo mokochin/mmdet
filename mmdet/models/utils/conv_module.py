@@ -34,14 +34,14 @@ def build_conv_layer(cfg, *args, **kwargs):
     if layer_type not in conv_cfg:
         raise KeyError('Unrecognized norm type {}'.format(layer_type))
     else:
-        conv_layer = conv_cfg[layer_type]
+        conv_layer = conv_cfg[layer_type] #cfg中读取conv_cfg中的一个类型
 
     layer = conv_layer(*args, **kwargs, **cfg_)
 
     return layer
 
 
-class ConvModule(nn.Module):
+class ConvModule(nn.Module): #这里做的是一个conv block
     """A conv block that contains conv/norm/activation layers.
 
     Args:
@@ -77,7 +77,7 @@ class ConvModule(nn.Module):
                  norm_cfg=None,
                  activation='relu',
                  inplace=True,
-                 order=('conv', 'norm', 'act')):
+                 order=('conv', 'norm', 'act')): #一个block的顺序
         super(ConvModule, self).__init__()
         assert conv_cfg is None or isinstance(conv_cfg, dict)
         assert norm_cfg is None or isinstance(norm_cfg, dict)

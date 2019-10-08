@@ -67,12 +67,12 @@ class SingleRoIExtractor(nn.Module):
             Tensor: Level index (0-based) of each RoI, shape (k, )
         """
         scale = torch.sqrt(
-            (rois[:, 3] - rois[:, 1] + 1) * (rois[:, 4] - rois[:, 2] + 1))
-        target_lvls = torch.floor(torch.log2(scale / self.finest_scale + 1e-6))
-        target_lvls = target_lvls.clamp(min=0, max=num_levels - 1).long()
+            (rois[:, 3] - rois[:, 1] + 1) * (rois[:, 4] - rois[:, 2] + 1)) #面积开根号求scale
+        target_lvls = torch.floor(torch.log2(scale / self.finest_scale + 1e-6))#向下取整 加了1e-6避免0值
+        target_lvls = target_lvls.clamp(min=0, max=num_levels - 1).long() #限制level的范围
         return target_lvls
 
-    def roi_rescale(self, rois, scale_factor):
+    def roi_rescale(self, rois, scale_factor): #把roi resize成某层的大小
         cx = (rois[:, 1] + rois[:, 3]) * 0.5
         cy = (rois[:, 2] + rois[:, 4]) * 0.5
         w = rois[:, 3] - rois[:, 1] + 1

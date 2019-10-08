@@ -5,7 +5,7 @@ from . import nms_cpu, nms_cuda
 from .soft_nms_cpu import soft_nms_cpu
 
 
-def nms(dets, iou_thr, device_id=None):
+def nms(dets, iou_thr, device_id=None): #在cpu或者gpu上执行nms
     """Dispatch to either CPU or GPU NMS implementations.
 
     The input can be either a torch tensor or numpy array. GPU NMS will be used
@@ -22,21 +22,21 @@ def nms(dets, iou_thr, device_id=None):
         tuple: kept bboxes and indice, which is always the same data type as
             the input.
     """
-    # convert dets (tensor or numpy array) to tensor
-    if isinstance(dets, torch.Tensor):
+    # convert dets (tensor or numpy array) to tensor  判断是不是tensor
+    if isinstance(dets, torch.Tensor): #如果是tensoris_numpy=False
         is_numpy = False
         dets_th = dets
-    elif isinstance(dets, np.ndarray):
+    elif isinstance(dets, np.ndarray): #如果是numpy 利用torch.from_numpy转换成cuda上的tensor
         is_numpy = True
         device = 'cpu' if device_id is None else 'cuda:{}'.format(device_id)
         dets_th = torch.from_numpy(dets).to(device)
-    else:
+    else: #都不是则报错typeerror
         raise TypeError(
             'dets must be either a Tensor or numpy array, but got {}'.format(
                 type(dets)))
 
     # execute cpu or cuda nms
-    if dets_th.shape[0] == 0:
+    if dets_th.shape[0] == 0: #dets的行数为零表示没有bbox，此时dets是tensor
         inds = dets_th.new_zeros(0, dtype=torch.long)
     else:
         if dets_th.is_cuda:

@@ -1,0 +1,3 @@
+sigmoid_focal_loss:
+    retinanet中提到的one-stage和two-stage性能中的区别在于。one-stage过程中会产生很多的负样本，focal_loss关注的是正负样本比例失衡的问题，降低了大量
+    简单负样本在训练中的权重。通过alpha和gamma系数调整样本loss的权值。

@@ -15,15 +15,15 @@ from ..utils import ConvModule
 class FCNMaskHead(nn.Module):
 
     def __init__(self,
-                 num_convs=4,
-                 roi_feat_size=14,
+                 num_convs=4,   #对应论文里右侧的那个mask head
+                 roi_feat_size=14, #mask head初始值14*14
                  in_channels=256,
                  conv_kernel_size=3,
                  conv_out_channels=256,
                  upsample_method='deconv',
-                 upsample_ratio=2,
-                 num_classes=81,
-                 class_agnostic=False,
+                 upsample_ratio=2, #fcn特征图还原
+                 num_classes=81, #80+1
+                 class_agnostic=False, #未知多少类
                  conv_cfg=None,
                  norm_cfg=None,
                  loss_mask=dict(
@@ -46,13 +46,13 @@ class FCNMaskHead(nn.Module):
         self.conv_cfg = conv_cfg
         self.norm_cfg = norm_cfg
         self.fp16_enabled = False
-        self.loss_mask = build_loss(loss_mask)
+        self.loss_mask = build_loss(loss_mask) #maskrcnn中的第三个loss
 
         self.convs = nn.ModuleList()
         for i in range(self.num_convs):
             in_channels = (
-                self.in_channels if i == 0 else self.conv_out_channels)
-            padding = (self.conv_kernel_size - 1) // 2
+                self.in_channels if i == 0 else self.conv_out_channels) #建立一系列的conv层，第一层的输入要初始化
+            padding = (self.conv_kernel_size - 1) // 2 #整除 padding下取整 根据fcn，为了特征图大小保持一致
             self.convs.append(
                 ConvModule(
                     in_channels,
@@ -62,10 +62,11 @@ class FCNMaskHead(nn.Module):
                     conv_cfg=conv_cfg,
                     norm_cfg=norm_cfg))
         upsample_in_channels = (
-            self.conv_out_channels if self.num_convs > 0 else in_channels)
+            self.conv_out_channels if self.num_convs > 0 else in_channels) #上采样加在最后
         if self.upsample_method is None:
             self.upsample = None
-        elif self.upsample_method == 'deconv':
+        elif self.upsample_method == 'deconv': #上采样的方式还有不同除了deconv，bilinear和nearest都是用nn.Unsample。
+            #具体的区别：https://discuss.pytorch.org/t/torch-nn-convtranspose2d-vs-torch-nn-upsample/30574
             self.upsample = nn.ConvTranspose2d(
                 upsample_in_channels,
                 self.conv_out_channels,
@@ -75,12 +76,12 @@ class FCNMaskHead(nn.Module):
             self.upsample = nn.Upsample(
                 scale_factor=self.upsample_ratio, mode=self.upsample_method)
 
-        out_channels = 1 if self.class_agnostic else self.num_classes
-        logits_in_channel = (
+        out_channels = 1 if self.class_agnostic else self.num_classes #判断是否有分类信息
+        logits_in_channel = (                                    #定义最后输出层
             self.conv_out_channels
             if self.upsample_method == 'deconv' else upsample_in_channels)
         self.conv_logits = nn.Conv2d(logits_in_channel, out_channels, 1)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.ReLU(inplace=True) #mmdet里面relu好像都设置了inplace，应该是为了加速。
         self.debug_imgs = None
 
     def init_weights(self):
@@ -123,7 +124,7 @@ class FCNMaskHead(nn.Module):
         return loss
 
     def get_seg_masks(self, mask_pred, det_bboxes, det_labels, rcnn_test_cfg,
-                      ori_shape, scale_factor, rescale):
+                      ori_shape, scale_factor, rescale): #对非背景的80做分割
         """Get segmentation masks from mask_pred and bboxes.
 
         Args:
@@ -141,11 +142,11 @@ class FCNMaskHead(nn.Module):
             list[list]: encoded masks
         """
         if isinstance(mask_pred, torch.Tensor):
-            mask_pred = mask_pred.sigmoid().cpu().numpy()
+            mask_pred = mask_pred.sigmoid().cpu().numpy() #tensor转cpu上的numpy
         assert isinstance(mask_pred, np.ndarray)
         # when enabling mixed precision training, mask_pred may be float16
         # numpy array
-        mask_pred = mask_pred.astype(np.float32)
+        mask_pred = mask_pred.astype(np.float32) #32
 
         cls_segms = [[] for _ in range(self.num_classes - 1)]
         bboxes = det_bboxes.cpu().numpy()[:, :4]

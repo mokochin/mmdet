@@ -6,7 +6,7 @@ from .bbox_head import BBoxHead
 
 
 @HEADS.register_module
-class ConvFCBBoxHead(BBoxHead):
+class ConvFCBBoxHead(BBoxHead): #
     """More general bbox head, with shared conv and fc layers and two optional
     separated branches.
 
@@ -16,7 +16,7 @@ class ConvFCBBoxHead(BBoxHead):
     """  # noqa: W605
 
     def __init__(self,
-                 num_shared_convs=0,
+                 num_shared_convs=0,  #同rpn_head，但是在conv后面加了fc
                  num_shared_fcs=0,
                  num_cls_convs=0,
                  num_cls_fcs=0,
@@ -169,7 +169,7 @@ class ConvFCBBoxHead(BBoxHead):
 
 
 @HEADS.register_module
-class SharedFCBBoxHead(ConvFCBBoxHead):
+class SharedFCBBoxHead(ConvFCBBoxHead): #此层基本闲置
 
     def __init__(self, num_fcs=2, fc_out_channels=1024, *args, **kwargs):
         assert num_fcs >= 1

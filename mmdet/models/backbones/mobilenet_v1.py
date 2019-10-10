@@ -80,10 +80,7 @@ def make_mb_layer(block, #block类型 这个函数可以把多个block合成一�
                    with_cp=False,
                    conv_cfg=None,
                    norm_cfg=dict(type='BN'),
-                   dcn=None,
-                   gcb=None,
-                   gen_attention=None,
-                   gen_attention_blocks=[]):
+                   ):
 
     layers=[]
     for i in range(0, num_blocks):     #每个stage里面block的数目，这里遍历每个block
@@ -98,10 +95,7 @@ def make_mb_layer(block, #block类型 这个函数可以把多个block合成一�
                 with_cp=with_cp,
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
-                dcn=dcn,
-                gcb=gcb,
-                gen_attention=gen_attention if
-                (i in gen_attention_blocks) else None))
+                ))
         inplanes=planes
 
     return nn.Sequential(*layers),inplanes #这是一个stage的所有layer
@@ -143,12 +137,6 @@ class MbNet_V1(nn.Module):
                  conv_cfg=None,
                  norm_cfg=dict(type='BN', requires_grad=True),
                  norm_eval=True,
-                 dcn=None,
-                 stage_with_dcn=(False, False, False, False,False,False),
-                 gcb=None,
-                 stage_with_gcb=(False, False, False, False, False),
-                 gen_attention=None,
-                 stage_with_gen_attention=((), (), (), (), (), ()),
                  with_cp=False,
                  zero_init_residual=True):
         super(MbNet_V1, self).__init__()
@@ -166,15 +154,6 @@ class MbNet_V1(nn.Module):
         self.norm_cfg = norm_cfg
         self.with_cp = with_cp
         self.norm_eval = norm_eval
-        self.dcn = dcn
-        self.stage_with_dcn = stage_with_dcn
-        if dcn is not None:
-            assert len(stage_with_dcn) == num_stages
-        self.gen_attention = gen_attention
-        self.gcb = gcb
-        self.stage_with_gcb = stage_with_gcb
-        if gcb is not None:
-            assert len(stage_with_gcb) == num_stages
         self.zero_init_residual = zero_init_residual
         self.block, stage_blocks = self.arch_settings[depth]
         self.stage_blocks = stage_blocks[:num_stages]
@@ -200,10 +179,7 @@ class MbNet_V1(nn.Module):
                 with_cp=with_cp,
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
-                dcn=dcn,
-                gcb=gcb,
-                gen_attention=gen_attention,
-                gen_attention_blocks=stage_with_gen_attention[i])
+                )
             self.inplanes=planes_scale
             layer_name = 'layer{}'.format(i + 1)
             self.add_module(layer_name, mb_layer)

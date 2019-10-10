@@ -72,9 +72,9 @@ class BasicBlock(nn.Module):
 
 def make_mb_layer(block, #block类型 这个函数可以把多个block合成一个stage
                    inplanes,
-                   planes_index, #tuple类型
+                   planes_stage_index, #tuple类型
                    num_blocks, #第几个stage的block数目
-                   strides_index,
+                   strides_stage_index,
                    dilation=1,
                    style='pytorch',
                    with_cp=False,
@@ -84,12 +84,12 @@ def make_mb_layer(block, #block类型 这个函数可以把多个block合成一�
 
     layers=[]
     for i in range(0, num_blocks):     #每个stage里面block的数目，这里遍历每个block
-        planes=inplanes*planes_index[i]
+        planes=inplanes*planes_stage_index[i]
         layers.append(
             block(
                 inplanes=inplanes,
                 planes=planes,
-                stride=strides_index[i],
+                stride=strides_stage_index[i],
                 dilation=dilation,
                 style=style,
                 with_cp=with_cp,
@@ -163,15 +163,15 @@ class MbNet_V1(nn.Module):
 
         self.mb_layers = []
         for i, num_blocks in enumerate(self.stage_blocks):
-            strides_index = strides_index[i] #这里strides_index，plane_index是tuple
-            planes_index = planes_index[i]
+            strides_stage_index = strides_index[i] #这里strides_index，plane_index是tuple
+            planes_stage_index = planes_index[i]
             dilation = 1
             mb_layer, planes_scale = make_mb_layer(
                 self.block,
                 self.inplanes,
-                planes_index, #tuple
+                planes_stage_index, #tuple
                 num_blocks, #这个stage里面block的总数
-                strides_index,
+                strides_stage_index,
                 dilation=dilation,
                 style=self.style,
                 with_cp=with_cp,
@@ -229,18 +229,12 @@ class MbNet_V1(nn.Module):
                 elif isinstance(m, (_BatchNorm, nn.GroupNorm)):
                     constant_init(m, 1)
 
-            if self.dcn is not None:
-                for m in self.modules():
-                    if isinstance(m, BasicBlock) and hasattr(
-                            m, 'conv2_offset'):
-                        constant_init(m.conv2_offset, 0)
-
-            if self.zero_init_residual:
-                for m in self.modules():
-                    if isinstance(m, BasicBlock):
-                        constant_init(m.norm3, 0)
-                    elif isinstance(m, BasicBlock):
-                        constant_init(m.norm2, 0)
+            #if self.zero_init_residual:
+                #for m in self.modules():
+                    #if isinstance(m, BottleBlock):
+                    #    constant_init(m.norm3, 0)
+                    #elif isinstance(m, BasicBlock):
+                    #constant_init(m.norm2, 0)
         else:
             raise TypeError('pretrained must be a str or None')
 

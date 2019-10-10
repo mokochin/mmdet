@@ -166,8 +166,6 @@ class MbNet_V1(nn.Module):
             strides_index = strides_index[i] #这里strides_index，plane_index是tuple
             planes_index = planes_index[i]
             dilation = 1
-            dcn = self.dcn if self.stage_with_dcn[i] else None
-            gcb = self.gcb if self.stage_with_gcb[i] else None
             mb_layer, planes_scale = make_mb_layer(
                 self.block,
                 self.inplanes,

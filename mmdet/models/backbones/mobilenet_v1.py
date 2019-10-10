@@ -189,7 +189,7 @@ class MbNet_V1(nn.Module):
             dilation = 1
             dcn = self.dcn if self.stage_with_dcn[i] else None
             gcb = self.gcb if self.stage_with_gcb[i] else None
-            mb_layer,planes_scale= make_mb_layer(
+            mb_layer, planes_scale = make_mb_layer(
                 self.block,
                 self.inplanes,
                 planes_index, #tuple

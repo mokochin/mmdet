@@ -7,13 +7,14 @@ model = dict(
         depth=28,
         num_stages=6,
         out_indices=(0, 1, 2, 3, 4, 5),
-        frozen_stages=1,
+        frozen_stages=-1,
         style='pytorch'),
     neck=dict(
         type='FPN',
-        in_channels=[128,256,512,1024], #对应conv2,3,4,5
+        in_channels=[32,64,128,256,512,1024], #对应conv2,3,4,5
         out_channels=256, #组合后的输出
-        num_outs=5),
+        num_outs=5,
+        start_level=2),
     rpn_head=dict(
         type='RPNHead',
         in_channels=256,
@@ -54,7 +55,7 @@ model = dict(
         num_convs=4,
         in_channels=256,
         conv_out_channels=256,
-        num_classes=18, #num+1
+        num_classes=81, #num+1
         loss_mask=dict(
             type='CrossEntropyLoss', use_mask=True, loss_weight=1.0)))
 # model training and testing settings

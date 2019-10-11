@@ -14,7 +14,7 @@ class FPN(nn.Module):
                  in_channels, #不同的stage最后的输出通道数 [256, 512, 1024, 2048]
                  out_channels, #经过fpn之后的特征层通道数， 256d
                  num_outs,  #特征融合层的数目 也是最终输出的level数目 =5 4个stage输出5个level？
-                 start_level=2,
+                 start_level=0,
                  end_level=-1,
                  add_extra_convs=False,
                  extra_convs_on_inputs=True,
@@ -34,7 +34,7 @@ class FPN(nn.Module):
 
         if end_level == -1:
             self.backbone_end_level = self.num_ins
-            assert num_outs >= self.num_ins - start_level
+            assert num_outs >= self.num_ins - start_level  #5>=4-2
         else:
             # if end_level < inputs, no extra level is allowed
             self.backbone_end_level = end_level
@@ -73,7 +73,7 @@ class FPN(nn.Module):
             self.fpn_convs.append(fpn_conv)
 
         # add extra conv layers (e.g., RetinaNet)
-        extra_levels = num_outs - self.backbone_end_level + self.start_level
+        extra_levels = num_outs - self.backbone_end_level + self.start_level #5-4+0 这里有一侧extra conv layer
         if add_extra_convs and extra_levels >= 1:
             for i in range(extra_levels):
                 if i == 0 and self.extra_convs_on_inputs:

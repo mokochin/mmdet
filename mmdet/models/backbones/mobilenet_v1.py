@@ -43,8 +43,6 @@ class BasicBlock(nn.Module):
         self.conv2 = build_conv_layer(   #point_conv
             conv_cfg, inplanes, planes, 1, stride=1, padding=0, bias=False)
         self.add_module(self.norm2_name, norm2)
-
-        self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
         self.stride = stride
         self.dilation = dilation
@@ -61,11 +59,9 @@ class BasicBlock(nn.Module):
     def forward(self, x):
         out = self.conv1(x)
         out = self.norm1(out)
-        out = self.relu(out)
 
         out = self.conv2(out)
         out = self.norm2(out)
-        out = self.relu(out)  #mobilenet没有残差部分
 
         return out
 
@@ -104,34 +100,30 @@ def make_mb_layer(block, #block类型 这个函数可以把多个block合成一�
 class MbNet_V1(nn.Module):
 
     arch_settings = {
-        28: (BasicBlock, (1,1,2,2,6,1))
+        28: (BasicBlock, (3,2,6,2))
     }
 
     stride_settings={
-        0: (1,),
-        1: (2,),
-        2: (1, 2),
-        3: (1, 2),
-        4: (1,1,1,1,1,2),
-        5: (1,)
+        0: (1,2,1),
+        1: (2,1),
+        2: (2,1,1,1,1,1),
+        3: (2,1,)
     }
 
     plane_settings={
-        0: (2,),
-        1: (2,),
-        2: (1,2),
-        3: (1,2),
-        4: (1,1,1,1,1,2),
-        5: (1,)
+        0: (2,2,1),
+        1: (2,1),
+        2: (2,1,1,1,1,1),
+        3: (2,1)
     }
 
     def __init__(self,
                  depth,
-                 num_stages=6,
+                 num_stages=4,
                  strides_index=stride_settings,
                  planes_index=plane_settings,
                  dilations=1,
-                 out_indices=(0, 1, 2, 3, 4, 5), #第几个stage
+                 out_indices=(0, 1, 2, 3), #第几个stage
                  style='pytorch',
                  frozen_stages=-1, #不冻结
                  conv_cfg=None,
@@ -258,3 +250,7 @@ class MbNet_V1(nn.Module):
                 # trick: eval have effect on BatchNorm only
                 if isinstance(m, _BatchNorm):
                     m.eval()
+
+net1=MbNet_V1(28)
+net1.eval()
+print(net1)

@@ -23,7 +23,7 @@ class FPN(nn.Module):
                  norm_cfg=None,
                  activation=None):
         super(FPN, self).__init__() #继承nn.Module父类 torch中需要这样初始化网络
-        assert isinstance(in_channels, list) # 判断in_channels是不是一个list实例 不是则报错
+        assert isinstance(in_channels, list)
         self.in_channels = in_channels #fpn的inchannel应该有4个 rpn_r50_fpn_1x.py
         self.out_channels = out_channels
         self.num_ins = len(in_channels) #num_ins就是stage的个数

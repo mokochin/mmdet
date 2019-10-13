@@ -330,6 +330,6 @@ class ShuffleNet(nn.Module):
                 if isinstance(m, _BatchNorm):
                     m.eval()
 
-net=ShuffleNet(28)
+net=ShuffleNet(3)
 net.eval()
 print(net)

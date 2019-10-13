@@ -251,6 +251,3 @@ class MbNet_V1(nn.Module):
                 if isinstance(m, _BatchNorm):
                     m.eval()
 
-net1=MbNet_V1(28)
-net1.eval()
-print(net1)

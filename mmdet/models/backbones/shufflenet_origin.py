@@ -173,6 +173,8 @@ class ShuffleNet(nn.Module):
             num_classes (int, optional): number of classes to predict. Default
                 is 1000 for ImageNet.
         """
+
+
         super(ShuffleNet, self).__init__()
 
         self.groups = groups

@@ -64,7 +64,7 @@ class ShuffleUnit(nn.Module):
         self.grouped_conv = grouped_conv
         self.combine = combine
         self.groups = groups
-        self.bottleneck_channels = self.out_channels // 4
+        self.bottleneck_channels = self.out_channels // 4 #
 
         # define the type of ShuffleUnit
         if self.combine == 'add':

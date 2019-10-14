@@ -250,3 +250,6 @@ class MbNet_V1(nn.Module):
                 # trick: eval have effect on BatchNorm only
                 if isinstance(m, _BatchNorm):
                     m.eval()
+net=MbNet_V1(28)
+net.eval()
+print(net)

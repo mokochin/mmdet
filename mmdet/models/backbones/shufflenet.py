@@ -66,7 +66,7 @@ class ShuffleUnit(nn.Module):
             conv_cfg, in_channels, self.bottleneck_channels,
             kernel_size=1, stride=1, padding=padding, groups=self.first_1x1_groups)
         self.add_module(self.norm1_name, norm1) #nn里面添加层的方法 net1.add_module('batchnorm', nn.BatchNorm2d(3))
-
+        self.relu = nn.ReLU(inplace=True)
         #bottleneck:dw_conv、bn
         self.conv2 = build_conv_layer(
             conv_cfg, self.bottleneck_channels, self.bottleneck_channels,
@@ -78,8 +78,6 @@ class ShuffleUnit(nn.Module):
             conv_cfg, self.bottleneck_channels, self.out_channels,
             kernel_size=1, stride=1, groups=self.groups)
         self.add_module(self.norm3_name, norm3)
-
-        self.relu = nn.ReLU(inplace=True)
 
         if self.combine == 'add':
             # ShuffleUnit Figure 2b
@@ -151,7 +149,7 @@ def make_shuffle_layer(block, in_channels, bottleneck_channels, out_channels, nu
             bottleneck_channels=bottleneck_channels,
             out_channels=out_channels,
             stride=2,
-            grouped_conv=grouped_conv,
+            grouped_conv=grouped_conv if in_channels!=24 else False,
             style=style,
             with_cp=with_cp,
             conv_cfg=conv_cfg,
@@ -225,7 +223,7 @@ class ShuffleNet(nn.Module):
 
         self.sn_layers = []
         for i, num_blocks in enumerate(self.stage_blocks):
-            self.grouped_conv = True if i > 0 else False
+            self.grouped_conv = True
             sn_layer = make_shuffle_layer(
                 self.block,
                 self.in_channels,
@@ -306,7 +304,3 @@ class ShuffleNet(nn.Module):
                 # trick: eval have effect on BatchNorm only
                 if isinstance(m, _BatchNorm):
                     m.eval()
-
-net=ShuffleNet(3)
-net.eval()
-print(net)

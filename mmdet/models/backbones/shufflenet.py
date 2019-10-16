@@ -35,24 +35,23 @@ class ShuffleUnit(nn.Module):
 
     def __init__(self,
                  in_channels,
+                 bottleneck_channels,
                  out_channels,
                  stride=1,
                  padding=1,
-                 bias=True,
                  groups=3,
-                 dilation=1,
+                 grouped_conv=True,
                  style='pytorch',
                  with_cp=False,
                  conv_cfg=None,
-                 grouped_conv=True,
                  norm_cfg=dict(type='BN',),
                  combine='add'):
         super(ShuffleUnit, self).__init__()
         self.in_channels = in_channels
+        self.bottleneck_channels = bottleneck_channels
         self.out_channels = out_channels
         self.groups = groups
         self.stride = stride
-        self.dilation = dilation
         self.combine = combine
 
         #定义norm
@@ -60,26 +59,24 @@ class ShuffleUnit(nn.Module):
         self.norm2_name, norm2 = build_norm_layer(norm_cfg, self.bottleneck_channels, postfix=2)  #norm2由conv2 dw_conv使用
         self.norm3_name, norm3 = build_norm_layer(norm_cfg, self.out_channels, postfix=3)  #norm3由conv3 expand使用
 
-        #定义bottleneck的尺寸
-        self.bottleneck_channels = in_channels//4 #每个stage_0都不是这样,需要修改
         self.first_1x1_groups = self.groups if grouped_conv else 1 #stage2_0的第一层
 
         #compress:compress1x1、bn、relu
         self.conv1 = build_conv_layer(
             conv_cfg, in_channels, self.bottleneck_channels,
-            kernel_size=1, stride=stride, padding=padding, bias=bias, groups=self.first_1x1_groups)
+            kernel_size=1, stride=1, padding=padding, groups=self.first_1x1_groups)
         self.add_module(self.norm1_name, norm1) #nn里面添加层的方法 net1.add_module('batchnorm', nn.BatchNorm2d(3))
 
         #bottleneck:dw_conv、bn
         self.conv2 = build_conv_layer(
             conv_cfg, self.bottleneck_channels, self.bottleneck_channels,
-            kernel_size=3, stride=self.depthwise_stride, groups=self.bottleneck_channels)
+            kernel_size=3, stride=self.stride, groups=self.bottleneck_channels)
         self.add_module(self.norm2_name, norm2)
 
         #expand:expand1x1、bn
         self.conv3 = build_conv_layer(
             conv_cfg, self.bottleneck_channels, self.out_channels,
-            kernel_size=1, group=self.groups)
+            kernel_size=1, stride=1, groups=self.groups)
         self.add_module(self.norm3_name, norm3)
 
         self.relu = nn.ReLU(inplace=True)
@@ -112,24 +109,6 @@ class ShuffleUnit(nn.Module):
         return torch.cat((x, out), 1)
         # define the type of ShuffleUnit
 
-    def _make_grouped_conv1x1(self, in_channels, out_channels, groups,
-                              batch_norm=True, relu=False):
-
-        modules = OrderedDict()
-
-        conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=1, groups=groups)
-
-        modules['conv1x1'] = conv
-
-        if batch_norm:
-            modules['batch_norm'] = nn.BatchNorm2d(out_channels)
-        if relu:
-            modules['relu'] = nn.ReLU()
-        if len(modules) > 1:
-            return nn.Sequential(modules)
-        else:
-            return conv
-
     @property
     def norm1(self):
         return getattr(self, self.norm1_name) # getattr返回一个对象的属性值
@@ -161,34 +140,34 @@ class ShuffleUnit(nn.Module):
 
         return out
 
-def make_shuffle_layer(block, in_channels, out_channels, blocks,
-                   stride=1, dilation=1,
-                   style='pytorch',
-                   with_cp=False,
-                   conv_cfg=None,
+def make_shuffle_layer(block, in_channels, bottleneck_channels, out_channels, num_blocks,
+                   style='pytorch', with_cp=False, conv_cfg=None, grouped_conv=True,
                    norm_cfg=dict(type='BN')):
 
     layers = []
     layers.append(
         block(
             in_channels=in_channels,
+            bottleneck_channels=bottleneck_channels,
             out_channels=out_channels,
-            stride=stride,
+            stride=2,
+            grouped_conv=grouped_conv,
             style=style,
             with_cp=with_cp,
             conv_cfg=conv_cfg,
             norm_cfg=norm_cfg,
             ))
 
-    in_channels = out_channels * block.expansion
+    in_channels = out_channels
 
-    for i in range(1, blocks):
+    for i in range(1, num_blocks):
         layers.append(
             block(
                 in_channels=in_channels,
+                bottleneck_channels=bottleneck_channels,
                 out_channels=out_channels,
                 stride=1,
-                dilation=dilation,
+                grouped_conv=grouped_conv,
                 style=style,
                 with_cp=with_cp,
                 conv_cfg=conv_cfg,
@@ -239,19 +218,21 @@ class ShuffleNet(nn.Module):
         self.block, bottleneck_channels, out_channels, stage_blocks = self.arch_settings[self.g_groups]
         self.stage_blocks = stage_blocks[:num_stages]
         self.bottleneck_channels = bottleneck_channels[:num_stages]
-        self.out_channels=out_channels[:num_stages]
-        self.in_channels=in_channels
+        self.out_channels = out_channels[:num_stages]
+        self.in_channels = in_channels
 
         self._make_stem_layer()
 
         self.sn_layers = []
         for i, num_blocks in enumerate(self.stage_blocks):
+            self.grouped_conv = True if i > 0 else False
             sn_layer = make_shuffle_layer(
                 self.block,
                 self.in_channels,
                 self.bottleneck_channels[i],
                 self.out_channels[i],
                 num_blocks,
+                grouped_conv=self.grouped_conv,
                 style=self.style,
                 with_cp=with_cp,
                 conv_cfg=conv_cfg,
@@ -263,7 +244,6 @@ class ShuffleNet(nn.Module):
             self.in_channels=self.out_channels[i]
 
         self._freeze_stages()
-
 
     def _make_stem_layer(self): #这个是最前面的层
         self.conv1 = build_conv_layer(
@@ -311,9 +291,9 @@ class ShuffleNet(nn.Module):
         x = self.conv1(x)
         x = self.maxpool(x)
         outs = []
-        for i, layer_name in enumerate(self.res_layers):
-            res_layer = getattr(self, layer_name)
-            x = res_layer(x)
+        for i, layer_name in enumerate(self.sn_layers):
+            sn_layer = getattr(self, layer_name)
+            x = sn_layer(x)
             if i in self.out_indices:
                 outs.append(x)
         return tuple(outs)

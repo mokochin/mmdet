@@ -109,7 +109,7 @@ data_root = 'data/coco/' #训练数据的文件根目录。这里我使用了ln 
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True) #输入图像初始化，减去mean，除以std。to_rgb表示bgr转为rgb
 data = dict(
-    imgs_per_gpu=2, #每个gpu计算的图像数量
+    imgs_per_gpu=4, #每个gpu计算的图像数量
     workers_per_gpu=2, #每个gpu分配的线程数
     train=dict(
         type=dataset_type,  #数据集的类型

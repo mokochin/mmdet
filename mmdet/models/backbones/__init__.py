@@ -5,4 +5,4 @@ from .ssd_vgg import SSDVGG
 from .mobilenet_v1 import MbNet_V1
 # from .shufflenet import ShuffleNet
 
-__all__ = ['ResNet', 'MbNet_V1', 'make_res_layer', 'ResNeXt', 'SSDVGG', 'HRNet']
+__all__ = ['ResNet', 'MbNet_V1', '' 'make_res_layer', 'ResNeXt', 'SSDVGG', 'HRNet']

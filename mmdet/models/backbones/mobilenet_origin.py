@@ -53,6 +53,3 @@ class MobileNet(nn.Module):
         out = self.linear(out)
         return out
 
-net=MobileNet()
-net.eval()
-print(net)
